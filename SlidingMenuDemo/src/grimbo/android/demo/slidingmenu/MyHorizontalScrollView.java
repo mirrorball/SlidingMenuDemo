@@ -21,14 +21,21 @@
  */
 package grimbo.android.demo.slidingmenu;
 
+import java.sql.Savepoint;
+
 import android.content.Context;
+import android.database.DataSetObservable;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.HorizontalScrollView;
+import android.widget.ListView;
+import android.widget.Toast;
 
 /**
  * A HorizontalScrollView (HSV) implementation that disallows touch events (so no scrolling can be done by the user).
@@ -85,12 +92,36 @@ public class MyHorizontalScrollView extends HorizontalScrollView {
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         // Do not allow touch events.
-        return false;
-    }
+    	
+    	final int action = ev.getAction();
+    	final float x = ev.getX();
+    	final float y = ev.getY();
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        // Do not allow touch events.
+		switch (action) {
+		case MotionEvent.ACTION_DOWN:
+			Log.i("dddddddd", "ACTION_DOWN x: " + x + ", y: " + y);
+			break;
+		case MotionEvent.ACTION_MOVE:
+			Log.i("mmmmmmm", "ACTION_MOVE x: " + x + ", y: " + y);
+			break;
+
+		case MotionEvent.ACTION_UP:
+			Log.i("uuuuuuuu", "ACTION_UP x: " + x + ", y: " + y);
+			break;
+
+		case MotionEvent.ACTION_CANCEL:
+			Log.i("ccccccccc", "ACTION_CANCEL x: " + x + ", y: " + y);
+			break;
+		}
+		
+		
+    	 // 터치 up이 되었을 때 화면을 갱신한다.        
+		return false;
+	}
+
+	@Override
+	public boolean onInterceptTouchEvent(MotionEvent ev) {
+		// Do not allow touch events.
         return false;
     }
 
@@ -188,5 +219,103 @@ public class MyHorizontalScrollView extends HorizontalScrollView {
          *            dims[0] should be set to View width. dims[1] should be set to View height.
          */
         public void getViewSize(int idx, int w, int h, int[] dims);
-    }
+	}
+
+	// /////////////////////////mycode//////////////////////////////////////////////
+    
+	private static final int SWIPE_MIN_DISTANCE = 120;
+	private static final int SWIPE_MAX_OFF_PATH = 250;
+    private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+    static class MyGestureDetector extends SimpleOnGestureListener{
+    	private void Invalidate() {
+			// TODO Auto-generated method stub
+    		
+		}
+    	View menu;  	
+    	HorizontalScrollView scrollView;
+		ListView listView;
+    	
+    	public MyGestureDetector(View menu, HorizontalScrollView scrollView, ListView listView) {
+            super();
+            this.menu = menu;
+            this.scrollView = scrollView;
+            this.listView = listView;
+            menu.invalidate();
+    		scrollView.invalidate();
+    		listView.invalidate();
+    		Invalidate();
+        }
+    	
+        boolean menuOut = false;
+        
+        private OnTouchListener mTouchEvent = new OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				// TODO Auto-generated method stub
+				
+				switch (event.getAction()) {
+		        case MotionEvent.ACTION_UP :
+		            // invalidate()을 호출하면 화면을 갱신한다.
+		            menu.invalidate();
+		            listView.invalidate();
+		            scrollView.invalidate();
+		            break;
+		        }
+				return false;
+			}
+		};
+    	@Override
+    	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+    			float velocityY) {
+    		// TODO Auto-generated method stub
+    		menu.invalidate();
+    		scrollView.invalidate();
+    		listView.invalidate();
+    		Context context = menu.getContext();
+            int menuWidth = menu.getMeasuredWidth();
+            
+            final Toast rt = Toast.makeText(context, "Right Swipe", Toast.LENGTH_SHORT);
+            final Toast lt = Toast.makeText(context, "Left Swipe", Toast.LENGTH_SHORT);
+            
+    		try {
+                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+                    return false;
+     
+                // right to left swipe
+                if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                	int left = menuWidth;
+                    scrollView.smoothScrollTo(left, 0);
+                    rt.show();
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                    	@Override
+                    	public void run() {
+                    		// TODO Auto-generated method stub
+                    		rt.cancel();
+                    	}
+                    }, 1);
+                }
+                // left to right swipe
+                else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    int left = 0;
+                    scrollView.smoothScrollTo(left, 0);
+                    lt.show();
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                    	@Override
+                    	public void run() {
+                    		// TODO Auto-generated method stub
+                    		lt.cancel();
+                    	}
+                    }, 1);
+                }
+            } catch (Exception e) {
+            	
+			}
+
+			return true;
+		}
+	}
+	///////////////////////////mycode END//////////////////////////////////////////
 }

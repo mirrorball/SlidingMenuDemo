@@ -22,10 +22,17 @@
 package grimbo.android.demo.slidingmenu;
 
 import android.content.Context;
+import android.os.Handler;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.HorizontalScrollView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -33,6 +40,8 @@ import android.widget.Toast;
  * Utility methods for Views.
  */
 public class ViewUtils {
+	private static ArrayAdapter adapter;
+	
     private ViewUtils() {
     }
 
@@ -65,15 +74,56 @@ public class ViewUtils {
         for (int i = 0; i < arr.length; i++) {
             arr[i] = prefix + (i + 1);
         }
-        listView.setAdapter(new ArrayAdapter<String>(context, layout, arr));
+        
+        
+        adapter = new ArrayAdapter<String>(context, layout, arr);
+        listView.setAdapter(adapter);
+        
+        //listView.setAdapter(new ArrayAdapter<String>(context, layout, arr));
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Context context = view.getContext();
                 String msg = "item[" + position + "]=" + parent.getItemAtPosition(position);
-                Toast.makeText(context, msg, 1000).show();
+                final Toast t = Toast.makeText(context, msg, 1000);
+                t.show();
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                	@Override
+                	public void run() {
+                		// TODO Auto-generated method stub
+                		t.cancel();
+                	}
+                }, 1);
                 System.out.println(msg);
+                
             }
+            
         });
+        
+        
+        //listView.notifyAll();
+        //listView.notify();
+        adapter = new ArrayAdapter<String>(context, layout, arr);
+        adapter.notifyDataSetChanged();
+        listView.setAdapter(adapter);
+        /*
+        listView.clearAnimation();
+        listView.clearChildFocus(listView);
+        listView.clearTextFilter();
+        listView.clearChoices();
+        listView.clearDisappearingChildren();
+        listView.clearFocus();
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+        	@Override
+        	public void run() {
+        		// TODO Auto-generated method stub
+        		
+        	}
+        }, 1);
+        */
     }
+    
 }
